@@ -14,6 +14,8 @@
 #include <behaviors/runtime-input-processor.dtsi>
 
 // Layer definitions
+// NOTE: TRACKBALL_L2 (layer 9) is new in zmk-keyboard-dya-dash
+//       Layers after TRACKBALL_L are shifted by 1 compared to dya-dash
 
 #define DEFAULT_L 0
 #define WINDOWS_L 1
@@ -29,8 +31,10 @@
 #define EXT1_L 11
 #define EXT2_L 12
 #define EXT3_L 13
+#define GAME_L 14
+#define GAME2_L 15
 
-
+// --- Trackball config (new runtime-input-processor style) ---
 
 &mouse_runtime_input_processor {
     temp-layer-enabled;
@@ -54,61 +58,108 @@
 &trackball_l {cpi = <600>; };
 
 / {
+    behaviors {
+        // ctrl+h as backspace
+        hbackspace: h_or_ctrl_backspace {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&kp H>, <&kp BACKSPACE>;
+            mods = <(MOD_LCTL)>;
+        };
+
+        // ctrl+j as enter
+        jenter: j_or_ctrl_enter {
+            compatible = "zmk,behavior-mod-morph";
+            #binding-cells = <0>;
+            bindings = <&kp J>, <&kp ENTER>;
+            mods = <(MOD_LCTL)>;
+        };
+
+        // output for tap, bt for hold
+        outbt: out_bt {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <1000>;
+            bindings = <&bt1param>, <&out>;
+            display-name = "Out-BT";
+        };
+
+        tog_off: toggle_layer_off_only {
+            compatible = "zmk,behavior-toggle-layer";
+            #binding-cells = <1>;
+            display-name = "Toggle Layer Off";
+            toggle-mode = "off";
+        };
+    };
+
     macros {
-        // Disconnect from all once for reliable connection to selected profile.
-        // ZMK automatically reconnects to current profile right after disconnection.
         out_bt_nxt: out_bt_nxt {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             wait-ms = <50>;
-            bindings = <&out OUT_BLE &bt BT_NXT &bt BT_DISC 0 &bt BT_DISC 1 &bt BT_DISC 2 &bt BT_DISC 3>;
+            bindings = <&out OUT_BLE &bt BT_NXT &bt BT_DISC 0 &bt BT_DISC 1 &bt BT_DISC 2 &bt BT_DISC 3 &bt BT_DISC 4>;
         };
-        // Change default layer for current profile to next layer
+
         dfnxt: dfnxt {
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             bindings = <&df DF_INC &animtrig ANM_TRG 2>;
         };
-        ZMK_MACRO(nxt_win,
-            display-name = "Next Window";
-            bindings = <&macro_press &kp LWIN &kp LCTRL>
-                     , <&macro_tap &kp RIGHT_ARROW>
-                     , <&macro_release &kp LCTRL &kp LWIN>;
-        )
-        ZMK_MACRO(prv_win,
-            display-name = "Previous Window";
-            bindings = <&macro_press &kp LWIN &kp LCTRL>
-                     , <&macro_tap &kp LEFT_ARROW>
-                     , <&macro_release &kp LCTRL &kp LWIN>;
-        )
-    };
-    behaviors {
-        // ctrl+h as backspace
 
-        hbackspace: h_ctrl_backspace {
-            compatible = "zmk,behavior-mod-morph";
-            #binding-cells = <0>;
-            bindings = <&kp H>, <&kp BACKSPACE>;
-
-            mods = <(MOD_LCTL)>;
+        // macro to use &bt in hold-tap
+        bt1param: bt_1param {
+            compatible = "zmk,behavior-macro-one-param";
+            #binding-cells = <1>;
+            wait-ms = <0>;
+            bindings = <&macro_param_1to1 &bt MACRO_PLACEHOLDER 0>;
         };
 
-        // ctrl+j as enter
+        // deactivate specified layer and execute &mo
+        mo2: mo2 {
+            compatible = "zmk,behavior-macro-one-param";
+            #binding-cells = <1>;
+            bindings = <&macro_param_1to1 &tog_off MACRO_PLACEHOLDER &macro_param_1to1 &mo MACRO_PLACEHOLDER>;
+        };
 
-        jenter: j_ctrl_enter {
-            compatible = "zmk,behavior-mod-morph";
+        pass1: pass1 {
+            compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
-            bindings = <&kp J>, <&kp ENTER>;
+            bindings = <&kp NUMBER_0 &kp NUMBER_4 &kp NUMBER_2 &kp NUMBER_9 &kp NUMBER_0 &kp NUMBER_4 &kp NUMBER_2 &kp NUMBER_9>;
+            label = "PASS1";
+        };
 
-            mods = <(MOD_LCTL)>;
+        pass2: pass2 {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings = <&kp NUMBER_7 &kp NUMBER_1 &kp NUMBER_8 &kp NUMBER_8 &kp NUMBER_7 &kp NUMBER_1 &kp NUMBER_8 &kp NUMBER_8>;
+            label = "PASS2";
+        };
+
+        pass3: pass3 {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings = <&kp W &kp S &kp W &kp S &kp W &kp S>;
+            label = "PASS3";
+        };
+
+        pass4: pass4 {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings = <&kp W &kp S &kp H &kp Z &kp J &kp W &kp P &kp NUMBER_0 &kp S &kp NUMBER_2>;
+            label = "PASS4";
+        };
+
+        pass5: pass5 {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings = <&kp Q &kp U &kp B &kp E &kp L &kp E &kp Y &kp Q &kp U &kp B &kp E &kp L &kp E &kp Y>;
+            label = "PASS5";
         };
     };
 
     combos {
         compatible = "zmk,combos";
-
-        // Right side's setting button shares input pin with arrow keys.
-        // It works as a combo of two arrow keys.
 
         setting_r1 {
             timeout-ms = <10>;
@@ -126,194 +177,211 @@
     keymap {
         compatible = "zmk,keymap";
 
-        // template {
-            //     bindings = <
-            //         &trans      &trans      &trans      &trans      &trans      &trans      /**/ &trans      &trans      &trans      &trans      &trans      &trans
-            //         &trans      &trans      &trans      &trans      &trans      &trans      /**/ &trans      &trans      &trans      &trans      &trans      &trans
-            //         &trans      &trans      &trans      &trans      &trans      &trans      /**/ &trans      &trans      &trans      &trans      &trans      &trans
-            //                     &trans      &trans      &trans      &trans      &trans      /**/ &trans      &trans      &trans      &trans
-            //
-            //         &trans      &trans                                                      /**/ &trans      &trans      &trans      &trans
-            //         &trans      &trans      &trans      &trans                              /**/ &trans      &trans      &trans      &trans
-            //     >;
-        // };
-
+        // --- Layer 0: Default ---
         default_layer {
-            display-name = "Base";
-
-            // --------------------------------------------------------------------------------------------------------------------------------------------------
-            // |   TAB   |    Q    |    W    |    E    |    R    |    T       |            |    Y        |    U    |    I     |    O    |    P    |    [    |
-            // |   CTRL  |    A    |    S    |    D    |    F    |    G       |            |    H        |    J    |    K     |    L    |    ;    |    '    |
-            // |  SHIFT  |    Z    |    X    |    C    |    V    |    B       |            |    B        |    N    |    M     |    ,    |    .    |    /    |
-            //           |  CONFIG |   WIN   |   ALT   |  SPACE  | LEFT_LAYER |            | RIGHT_LAYER |  SPACE  |   ALT    |   WIN   |
-            // --------------------------------------------------------------------------------------------------------------------------------------------------
-            // | BLE     |  USB    |                                                       |  left   | up      | down    | right   |
-            // | touch1  | touch2  | (touch3)  | (touch 4) |                                   | touch1  | touch2  | (touch3)  | (touch 4) |
-
+            display-name = "Base Layer";
             bindings = <
-            &kp TAB                    &kp Q         &kp W     &kp E     &kp R         &kp T      &kp Y         &kp U              &kp I     &kp O      &kp P     &kp LBKT
-            &kp LCTRL                  &kp A         &kp S     &kp D     &kp F         &kp G      &hbackspace   &jenter            &kp K     &kp L      &kp SEMI  &kp SQT
-            &kp LSHIFT                 &kp Z         &kp X     &kp C     &kp V         &kp B      &kp B         &kp N              &kp M     &kp COMMA  &kp DOT   &kp FSLH
-            &mo CONFIG_L  &kp LWIN  &kp LALT  &kp SPACE &mo LEFT_L     &mo RIGHT_L   &kp SPACE          &kp RALT  &kp RWIN
-            &out OUT_TOG  &out_bt_nxt                                                    &kp UP        &kp LEFT           &kp DOWN  &kp RIGHT
-            &none         &none  &none     &none                                  &mo SCROLL_L  &mo TRACKBALL_L2    &none     &none
+&mt LEFT_ALT GRAVE         &kp Q        &kp W     &kp E            &kp R             &kp T             &kp Y              &kp U                    &kp I     &kp O      &kp P                  &kp MINUS
+&kp LEFT_SHIFT             &kp A        &kp S     &kp D            &kp F             &kp G             &kp H              &kp J                    &kp K     &kp L      &lt EXT3_L SEMICOLON   &kp BACKSPACE
+&kp LCTRL                  &kp Z        &kp X     &kp C            &kp V             &kp B             &kp DELETE         &kp N                    &kp M     &kp COMMA  &kp DOT                &lt EXT3_L SLASH
+                           &mo CONFIG_L &kp LWIN  &lt EXT2_L TAB   &lt LEFT_L LANG2  &lt RIGHT_L SPACE &lt RIGHT_L RETURN &lt EXT1_L INTERNATIONAL_2 &none   &none
+&outbt BT_CLR_CMD OUT_TOG  &out_bt_nxt                                                                 &kp UP             &kp ESC                  &kp DOWN  &kp RIGHT
+&trans                     &trans       &none     &none                                                 &mo SCROLL_L       &trans                   &none     &none
             >;
         };
 
+        // --- Layer 1: Windows ---
         windows_default_layer {
-            display-name = "Windows";
+            display-name = "Windows Default";
             bindings = <
-            &trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
-            &trans  &trans    &mt LALT LANG2  &trans  &lt LEFT_L LANG2  &lt RIGHT_L LANG1  &trans  &mt RALT LANG1  &trans
-            &trans  &trans                                                    &trans          &trans  &trans  &trans
-            &trans  &trans  &trans    &trans                                  &trans          &trans  &trans  &trans
+&trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
+        &trans  &kp LWIN  &mt LALT LANG2  &trans  &mt LALT LANG2  &mt RALT LANG1  &trans  &trans  &trans
+&trans  &trans                                                    &trans          &trans  &trans  &trans
+&trans  &trans  &trans    &trans                                  &trans          &trans  &trans  &trans
             >;
         };
 
+        // --- Layer 2: Mac ---
         mac_default_layer {
-            display-name = "Mac";
+            display-name = "Mac Default";
             bindings = <
-            &trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
-            &trans  &kp LALT  &mt LCMD LANG2  &trans  &lt LEFT_L LANG2  &lt RIGHT_L LANG1  &trans  &mt RCMD LANG1  &kp RALT
-            &trans  &trans                                                    &trans          &trans  &trans  &trans
-            &trans  &trans  &trans    &trans                                  &trans          &trans  &trans  &trans
+&trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
+        &trans  &kp LALT  &mt LCMD LANG2  &trans  &mt LCMD LANG2  &mt RCMD LANG1  &trans  &trans  &trans
+&trans  &trans                                                    &trans          &trans  &trans  &trans
+&trans  &trans  &trans    &trans                                  &trans          &trans  &trans  &trans
             >;
         };
 
+        // --- Layer 3: iOS ---
         ios_default_layer {
-            display-name = "iOS";
+            display-name = "iOS Default";
             bindings = <
-            &trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
-            &trans  &kp LALT  &mt LCMD LANG2  &trans  &lt LEFT_L LANG2  &lt RIGHT_L LANG1  &trans  &mt RCMD LANG1  &kp RALT
-            &trans  &trans                                                    &trans          &trans  &trans  &trans
-            &trans  &trans  &trans    &trans                                  &trans          &trans  &trans  &trans
+&trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans    &trans          &trans  &trans          &trans          &trans  &trans  &trans  &trans  &trans
+        &trans  &kp LALT  &mt LCMD LANG2  &trans  &mt LCMD LANG2  &mt RCMD LANG1  &trans  &trans  &trans
+&trans  &trans                                                    &trans          &trans  &trans  &trans
+&trans  &trans  &trans    &trans                                  &trans          &trans  &trans  &trans
             >;
         };
 
+        // --- Layer 4: Linux ---
         linux_default_layer {
-            display-name = "Linux";
+            display-name = "Linux Default";
             bindings = <
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans                                  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+        &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans                                  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans
             >;
         };
 
+        // --- Layer 5: Left ---
         left_layer {
-            display-name = "Left";
-
+            display-name = "Left SPACE";
             bindings = <
-            &kp ESC  &kp EXCL  &kp AT  &kp HASH  &kp DLLR  &kp PRCNT     &kp CARET  &kp AMPS   &kp ASTRK  &kp LPAR  &kp RPAR  &kp RBKT
-            &trans   &kp N1    &kp N2  &kp N3    &kp N4    &kp N5        &kp N6     &kp N7     &kp N8     &kp N9    &kp N0    &kp BACKSLASH
-            &trans   &trans    &trans  &trans    &trans    &trans        &kp GRAVE  &kp MINUS  &kp EQUAL  &kp LBKT  &kp RBKT  &kp RSHIFT
-            &trans    &trans  &trans    &trans    &trans        &trans     &trans     &trans     &trans
-            &trans   &trans                                              &trans     &trans     &trans     &trans
-            &trans   &trans    &trans  &trans                            &trans     &trans     &trans     &trans
+&trans  &kp F12  &kp F7  &kp F8  &kp F9  &trans     &trans   &kp NUMBER_7  &kp NUMBER_8  &kp NUMBER_9  &kp MINUS     &kp TAB
+&trans  &kp F11  &kp F4  &kp F5  &kp F6  &trans     &trans   &kp NUMBER_4  &kp NUMBER_5  &kp NUMBER_6  &kp DOT       &trans
+&trans  &kp F10  &kp F1  &kp F2  &kp F3  &trans     &trans   &kp DOT       &kp NUMBER_1  &kp NUMBER_2  &kp NUMBER_3  &trans
+        &trans   &trans  &trans  &trans  &kp SPACE  &kp DOT  &kp NUMBER_0  &trans        &trans
+&trans  &trans                                      &trans   &trans        &trans        &trans
+&trans  &trans   &trans  &trans                     &none    &none         &trans        &trans
             >;
         };
 
+        // --- Layer 6: Right ---
         right_layer {
-            display-name = "Right";
+            display-name = "Right SPACE";
             bindings = <
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans        &kp PG_UP     &kp UP        &kp PG_DN  &trans  &kp C_AL_LOCK
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans        &kp LEFT      &kp DOWN      &kp RIGHT  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &kp C_MUTE    &kp C_VOL_DN  &kp C_VOL_UP  &trans     &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans        &trans        &trans        &trans
-            &trans  &trans                                  &trans        &trans        &trans        &trans
-            &trans  &trans  &trans  &trans                  &none         &none         &trans        &trans
+&trans  &trans  &kp PG_UP  &kp UP    &kp PG_DN  &trans  &trans  &kp PG_UP       &mmv MOVE_UP    &kp PG_DN        &trans  &kp C_AL_LOCK
+&trans  &trans  &kp LEFT   &kp DOWN  &kp RIGHT  &trans  &trans  &mmv MOVE_LEFT  &mmv MOVE_DOWN  &mmv MOVE_RIGHT  &trans  &trans
+&trans  &trans  &trans     &trans    &trans     &trans  &trans  &trans          &trans          &trans           &trans  &trans
+        &trans  &trans     &trans    &trans     &trans  &trans  &trans          &trans          &trans
+&trans  &trans                                          &trans  &trans          &trans          &trans
+&trans  &trans  &trans     &trans                       &none   &none           &trans          &trans
             >;
         };
 
+        // --- Layer 7: Config ---
         config_layer {
-            display-name = "Config";
+            display-name = "Config Layer";
             bindings = <
-            &bootloader     &none       &none           &none  &none  &animtrig ANM_TRG 0 &none   &none   &none  &none  &none  &bootloader
-            &sys_reset      &none       &none           &none  &none  &animtrig ANM_TRG 1 &none  &none    &none  &none  &none  &sys_reset
-            &studio_unlock  &none       &none           &none  &none  &animtrig ANM_TRG 2 &none  &none    &none  &none  &none  &none
-            &none       &none           &none  &none  &none                &none             &none             &none             &none
-            &dfnxt          &bt BT_CLR                                                     &none             &none             &none             &none
-            &none           &none       &none           &none                              &none             &none             &none             &none
+&bootloader     &none       &none           &none  &none  &animtrig ANM_TRG 0  &animctl ANM_EN   &animctl ANM_DS   &animctl ANM_INC  &none  &none  &bootloader
+&sys_reset      &none       &none           &none  &none  &animtrig ANM_TRG 1  &animctl ANM_BRI  &animctl ANM_BRD  &none             &none  &none  &sys_reset
+&studio_unlock  &none       &none           &none  &none  &animtrig ANM_TRG 2  &none             &none             &none             &none  &none  &none
+                &none       &studio_unlock  &none  &none  &none                &none             &none             &none             &none
+&dfnxt          &bt BT_CLR                                                     &none             &none             &none             &none
+&none           &none       &none           &none                              &none             &none             &none             &none
             >;
         };
 
+        // --- Layer 8: Trackball Pointer (auto-mouse) ---
         trackball_layer {
-            display-name = "Automouse";
+            display-name = "Trackball Pointer";
             bindings = <
-            &trans  &trans  &trans  &trans  &trans  &trans        &trans    &trans            &trans     &trans     &trans        &trans
-            &trans  &trans  &trans  &trans  &trans  &trans        &trans    &mkp LCLK         &mkp RCLK  &mkp MCLK  &mo SCROLL_L  &kp RALT
-            &trans  &trans  &trans  &trans  &trans  &trans        &trans    &mkp MB4         &mkp LCLK  &trans     &trans        &trans
-            &trans  &trans  &trans  &trans  &mo SCROLL_L  &trans  &trans          &trans     &trans
-            &trans  &trans                                        &trans    &trans            &trans     &trans
-            &rip_hdpi  &rip_ldpi  &trans  &trans                        &trans    &rip_amka            &trans     &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans         &trans     &trans          &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans         &trans     &trans          &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &mkp LCLK      &mkp RCLK  &mo SCROLL_L    &trans
+        &trans  &trans  &trans  &trans  &mo SCROLL_L   &trans  &trans         &trans     &trans
+&trans  &trans                                         &trans  &trans         &trans     &trans
+&rip_hdpi  &rip_ldpi  &trans  &trans                   &trans  &rip_amka     &trans     &trans
             >;
         };
 
+        // --- Layer 9: Trackball Layer 2 (Mouse) - from zmk-keyboard-dya-dash default ---
         trackball_layer2 {
             display-name = "Mouse";
             bindings = <
-            &trans  &trans  &trans  &trans  &trans  &trans        &trans    &trans            &trans     &trans     &trans        &trans
-            &trans  &trans  &trans  &trans  &trans  &trans        &trans    &mkp LCLK         &mkp RCLK  &mkp RCLK  &mo SCROLL_L  &kp RALT
-            &trans  &trans  &trans  &trans  &trans  &trans        &trans    &mkp MCLK         &mkp LCLK  &trans     &trans        &trans
-            &trans  &trans  &trans  &trans  &mo SCROLL_L  &mkp MB4  &mkp MB5          &trans     &trans
-            &trans  &trans                                        &trans    &trans            &trans     &trans
-            &rip_hdpi  &rip_ldpi  &trans  &trans                        &trans    &trans            &trans     &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans    &trans    &trans     &trans     &trans        &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans    &mkp LCLK &mkp RCLK  &mkp RCLK  &mo SCROLL_L  &kp RALT
+&trans  &trans  &trans  &trans  &trans  &trans  &trans    &mkp MCLK &mkp LCLK  &trans     &trans        &trans
+        &trans  &trans  &trans  &trans  &mo SCROLL_L     &mkp MB4  &mkp MB5   &trans     &trans
+&trans  &trans                                           &trans    &trans     &trans     &trans
+&rip_hdpi  &rip_ldpi  &trans  &trans                     &trans    &trans     &trans     &trans
             >;
         };
 
+        // --- Layer 10: Scroll ---
         scroll_layer {
-            display-name = "Scroll";
+            display-name = "Trackball Scroll";
             bindings = <
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans                                  &trans  &trans  &trans  &trans
-            &rip_hscr  &rip_lscr &trans  &trans                  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+        &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans                                  &trans  &trans  &trans  &trans
+&rip_hscr  &rip_lscr  &trans  &trans            &trans  &trans  &trans  &trans
             >;
         };
 
-        extra1 {
-            display-name = "Ext1";
+        // --- Layer 11: EXT1 (Symbols - from your custom) ---
+        layer_ext1 {
+            display-name = "Symbols";
             bindings = <
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans                                  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans
+&trans  &kp LBRC          &kp LESS_THAN      &kp GREATER_THAN  &kp PERCENT  &kp DOLLAR    &kp AMPERSAND  &kp AT_SIGN      &kp LS(N8)  &kp LPAR          &kp LS(UNDERSCORE)  &kp HASH
+&trans  &kp LEFT_BRACKET  &kp RIGHT_BRACKET  &kp BSLH          &kp PLUS     &kp INT_YEN   &kp SLASH      &kp KP_ASTERISK  &kp SEMI    &kp SINGLE_QUOTE  &kp MINUS           &kp COLON
+&trans  &kp PLUS          &kp RBRC           &kp PIPE          &kp EXCL     &kp QUESTION  &kp EQUAL      &kp LS(INT_YEN)  &kp CARET   &kp COMMA         &kp DOT             &kp LS(INT_RO)
+        &trans            &trans             &trans            &trans       &kp SPACE     &kp ENTER      &trans           &trans      &trans
+&trans  &trans                                                                            &trans         &trans           &trans      &trans
+&trans  &trans            &trans             &trans                                       &trans         &trans           &trans      &trans
             >;
         };
 
-        extra2 {
-            display-name = "Ext2";
+        // --- Layer 12: EXT2 (Pass macros - from your custom) ---
+        layer_ext2 {
+            display-name = "Macros";
             bindings = <
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans                                  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans
+&pass1  &pass2  &trans  &trans  &trans  &trans         &trans  &trans  &trans  &trans  &trans  &trans
+&pass3  &pass4  &trans  &trans  &trans  &kp LG(LS(S))  &trans  &trans  &trans  &trans  &trans  &trans
+&pass5  &trans  &trans  &trans  &trans  &trans         &trans  &trans  &trans  &trans  &trans  &trans
+        &trans  &trans  &trans  &trans  &to GAME_L     &trans  &trans  &trans  &trans
+&trans  &trans                                         &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans                         &trans  &trans  &trans  &trans
             >;
         };
 
-        extra3 {
-            display-name = "Ext3";
+        // --- Layer 13: EXT3 (TP_Sence - from your custom) ---
+        layer_ext3 {
+            display-name = "TP_Sence";
             bindings = <
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans
-            &trans  &trans                                  &trans  &trans  &trans  &trans
-            &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans
+&kp TAB         &trans  &kp PG_UP  &kp UP        &kp PG_DN  &trans  &trans     &trans     &trans     &trans     &trans          &trans
+&kp LEFT_SHIFT  &trans  &kp LEFT   &kp DOWN      &kp RIGHT  &trans  &mkp MCLK  &mkp LCLK  &mkp RCLK  &mo SCROLL_L &mkp MCLK    &mkp MCLK
+&kp LCTRL       &trans  &trans     &trans        &trans     &trans  &trans     &mkp MCLK  &mkp LCLK  &mkp RCLK  &mo SCROLL_L    &trans
+                &trans  &trans     &kp LEFT_ALT  &trans     &mo SCROLL_L  &mkp MB4  &mkp MB5  &trans  &trans
+&trans          &trans                                              &trans     &trans     &trans     &trans
+&trans          &trans  &trans     &trans                           &trans     &trans     &trans     &trans
+            >;
+        };
+
+        // --- Layer 14: Game (from your custom layer 13) ---
+        game_layer {
+            display-name = "Game";
+            bindings = <
+&kp TAB         &kp Q    &kp W   &kp E         &kp R        &kp T      &trans  &trans  &trans  &trans  &trans  &trans
+&kp LEFT_SHIFT  &kp A    &kp S   &kp D         &kp F        &kp G      &trans  &trans  &trans  &trans  &trans  &trans
+&kp LCTRL       &kp Z    &kp X   &kp C         &kp V        &kp B      &trans  &trans  &trans  &trans  &trans  &trans
+                &kp ESC  &kp M   &kp LEFT_ALT  &mo GAME2_L  &kp SPACE  &trans  &trans  &trans  &trans
+&trans          &trans                                                  &trans  &to 0   &trans  &trans
+&trans          &trans   &trans  &trans                                 &trans  &trans  &trans  &trans
+            >;
+        };
+
+        // --- Layer 15: Game Sub (from your custom layer 14) ---
+        game_sub_layer {
+            display-name = "Game Sub";
+            bindings = <
+&trans  &kp F1        &kp F2        &kp F3        &kp F4        &kp F5        &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &kp NUMBER_1  &kp NUMBER_2  &kp NUMBER_3  &kp NUMBER_4  &kp NUMBER_5  &trans  &trans  &trans  &trans  &trans  &trans
+&trans  &trans        &trans        &trans        &trans        &trans        &trans  &trans  &trans  &trans  &trans  &trans
+        &trans        &trans        &trans        &trans        &trans        &trans  &trans  &trans  &trans
+&trans  &trans                                                                &trans  &trans  &trans  &trans
+&trans  &trans        &trans        &trans                                    &trans  &trans  &trans  &trans
             >;
         };
     };
